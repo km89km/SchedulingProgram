@@ -2,6 +2,7 @@ import datetime
 import pickle
 import startfunctions as startfunc
 import workrotaclass
+import shiftfunctions as shifun
 
 # retrieve date for previously generated week from external file.
 with open('previous_week.txt', 'r') as f:
@@ -56,3 +57,44 @@ for col in current_staff.colleagues:
     # add colleagues to each day in dictionary with their name as key and
     # the shift length as value for later expansion.
     work_rota.add_to_week(col, days, lengths)
+
+# with each day dictionary of week_dict now filled with the chosen colleagues
+# and their shift lengths, the next step is to use this information to determine
+# the final shifts of the colleagues.
+
+# group departments together for easy access in functions.
+mgrs = current_staff.group_by_dep('Manager')
+shwrm = current_staff.group_by_dep('Showroom')
+tills = current_staff.group_by_dep('Tills')
+wknd = current_staff.group_by_dep('Weekend')
+eve = current_staff.group_by_dep('Eve')
+shpflr = current_staff.group_by_dep('Shopfloor')
+wrhse = current_staff.group_by_dep('Warehouse')
+
+for day in work_rota.days_list:
+    # all scheduled colleagues are determined for the day.
+    daily_coverage = work_rota.day_rota(current_staff, day)
+    # colleagues_off = [col for col in staff.colleagues if
+    # col not in daily_coverage]
+    # for col in colleagues_off:
+    # exc.add_to_spread(self.output_file, col.name(), day)
+    # weekend staff are finalised first and the calculating method is only
+    # ran on weekend days.
+    if day == 'Saturday' or day == 'Sunday':
+        shifun.weekend_shift_calc(work_rota, day, daily_coverage, wknd)
+    # next are the departments that only work weekdays.
+    if day in work_rota.days_list[1:6]:
+        shifun.eve_shift_calc(work_rota, day, daily_coverage, eve)
+        shifun.warehouse_shift_calc(work_rota, day, daily_coverage, wrhse)
+        # TILLS SHIFT CALC FUNCTION
+    # the remaining departments work throughout the entire week and are
+    # calculated last.
+    # MANAGER SHIFT CALC FUNCTION
+    shifun.showroom_shift_calc(work_rota, day, daily_coverage, shwrm)
+    shifun.shopfloor_shift_calc(work_rota, day, daily_coverage, shpflr)
+
+# Display updated week_dict.
+for day in work_rota.week_dict:
+    print(day)
+    for col, shift in work_rota.week_dict[day].items():
+        print(f'{col.name()} : {shift}')

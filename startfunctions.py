@@ -18,7 +18,6 @@ def valid_input(date_input):
     return True
 
 
-# noinspection PyTypeChecker
 def days_calc(work_rota, staff_list, col):
     """returns the days to be worked for the desired colleague."""
     # Weekend colleagues only work weekends.
@@ -135,9 +134,12 @@ def weekend_check(col):
 
 
 def length_calc(col):
-    """determines the length of the colleagues' shifts."""
+    """returns the length of the colleagues' shifts."""
+    # if the total hours can be spread evenly over the number of days then a
+    # list containing the same shift length will be returned.
     if col.hours % col.days == 0:
         return [col.hours // col.days for _ in range(col.days)]
+    # if this is not the case, there will be 3 outlying possibilities.
     elif col.hours == 39:
         return [8, 8, 8, 8, 7]
     elif col.hours == 30:
