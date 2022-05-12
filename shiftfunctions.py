@@ -94,6 +94,57 @@ def shopfloor_shift_calc(work_rota, day, daily_coverage, shpflr):
         shift_result(work_rota, col, day, start, work_rota.week_dict[day][col])
 
 
+def tills_shift_calc(work_rota, day, daily_coverage, tills, staff):
+    """determines the shifts of the tills staff scheduled on the provided
+       day. The isolated tills members are checked against a daily_coverage
+       dictionary of the desired day. 2 members are scheduled every weekday
+       to allow for full coverage from 11 to close (Andrea or other shopfloor
+       member will cover desk from 9 to 11). If there is not 2 members scheduled
+       for a day, the till_shuffle method will correct this issue.
+    """
+    daily_staff = [col for col in tills if col in daily_coverage]
+    if len(daily_staff) != 2:
+        till_shuffle(work_rota, staff)
+        daily_coverage = work_rota.day_rota(staff, day, 'Tills')
+        daily_staff = [col for col in tills if col in daily_coverage]
+    options = [11, 15]
+    for col in daily_staff:
+        start = random.choice(options)
+        options.remove(start)
+        shift_result(work_rota, col, day, start,
+                     work_rota.week_dict[day][col])
+
+
+def till_shuffle(work_rota, staff):
+    """method that is called if there is not an even distribution of
+       till staff throughout the week. After going through the week
+       days and tallying the total number of till staff in each day, the
+       totals are sorted and one is removed from the day with most and
+       added to the day with least.
+    """
+    # initialise dict to store totals.
+    day_totals = {}
+    for day in work_rota.days_list[1:6]:
+        # Find the till staff present for each day.
+        daily_tills = work_rota.day_rota(staff, day, 'Tills')
+        # save number of till staff to dictionary with day as key.
+        day_totals[day] = len(daily_tills)
+    # sort dict by highest number of colleagues.
+    most_tills = sorted(day_totals.items(), key=lambda i: i[1], reverse=True)
+    # the day with most will be the first member and the least will be the last.
+    daymost, x = most_tills[0]
+    dayleast, y = most_tills[-1]
+    # find the colleagues not scheduled for the day with least colleagues.
+    most_coverage = work_rota.day_rota(staff, daymost, 'Tills')
+    least_coverage = work_rota.day_rota(staff, dayleast, 'Tills')
+    difference = [col for col in most_coverage if col not in least_coverage]
+    # the first colleague will be removed from the day with most.
+    chosen_till = difference[0]
+    del work_rota.week_dict[daymost][chosen_till]
+    # the next step is to then add the same colleague to the day with least.
+    work_rota.week_dict[dayleast][chosen_till] = 4
+
+
 def shift_result(work_rota, col, day, start, length):
     """Creates final shift to be inputted to week_dict for each colleague."""
     # If shift longer than 6 hours then break hour needs to be

@@ -86,7 +86,8 @@ for day in work_rota.days_list:
     if day in work_rota.days_list[1:6]:
         shifun.eve_shift_calc(work_rota, day, daily_coverage, eve)
         shifun.warehouse_shift_calc(work_rota, day, daily_coverage, wrhse)
-        # TILLS SHIFT CALC FUNCTION
+        shifun.tills_shift_calc(work_rota, day, daily_coverage, tills,
+                                current_staff)
     # the remaining departments work throughout the entire week and are
     # calculated last.
     # MANAGER SHIFT CALC FUNCTION
