@@ -60,7 +60,7 @@ def same_dep_calc(work_rota, staff_list, col, weekend_init=''):
     # create a dictionary of the previous colleagues days by subtracting
     # 1 from col_index variable.
     prev_col_days = work_rota.colleague_rota(
-        staff_list.colleagues[col_index - 1].name())
+        staff_list.colleagues[col_index - 1])
     # check to see if the previous colleague worked all 5 workdays or not.
     result = [d for d in work_rota.days_list[1:6] if d not in prev_col_days]
     # the result list will be True if the previous colleague didn't work all

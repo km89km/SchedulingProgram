@@ -1,5 +1,8 @@
 import random
 
+early_picks = []
+late_picks = []
+
 
 def weekend_shift_calc(work_rota, day, daily_coverage, wknd):
     """determines the shifts of the weekend staff scheduled on the provided
@@ -157,3 +160,5 @@ def shift_result(work_rota, col, day, start, length):
         work_rota.week_dict[day][col] = result
     # returns resulting shift to allow easier implementation into excel output.
     return result
+
+
