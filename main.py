@@ -90,7 +90,8 @@ for day in work_rota.days_list:
                                 current_staff)
     # the remaining departments work throughout the entire week and are
     # calculated last.
-    # MANAGER SHIFT CALC FUNCTION
+    shifun.manager_shift_calc(work_rota, day, daily_coverage, mgrs,
+                              current_staff)
     shifun.showroom_shift_calc(work_rota, day, daily_coverage, shwrm)
     shifun.shopfloor_shift_calc(work_rota, day, daily_coverage, shpflr)
 
