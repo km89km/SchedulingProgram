@@ -18,7 +18,7 @@ while not startfunc.valid_input(date_input):
     date_input = (input(f'What week would you like to generate? '
                         f'(Use format yyyy-mm-dd, i.e. 2022-01-01) : '))
 
-# save current week to file to access next time program is ran.
+# save current week to file to access next time program is run.
 with open('previous_week.txt', 'w') as f:
     f.write(date_input)
 
@@ -38,6 +38,9 @@ with open('current_staff', 'rb') as f:
 # whether they work in the same department. The idea is to have colleagues cover
 # the day(s) that their previous colleague is absent for better coverage.
 current_staff.colleagues.sort(key=lambda x: x.department)
+
+# group managers together for easy access in later function.
+mgrs = current_staff.group_by_dep('Manager')
 
 # create instance of WorkRota class to store the colleagues and their shifts
 # for the week. The instance will have a initialised dictionary called week_dict
@@ -62,41 +65,24 @@ for col in current_staff.colleagues:
 # and their shift lengths, the next step is to use this information to determine
 # the final shifts of the colleagues.
 
-# group departments together for easy access in functions.
-mgrs = current_staff.group_by_dep('Manager')
-shwrm = current_staff.group_by_dep('Showroom')
-tills = current_staff.group_by_dep('Tills')
-wknd = current_staff.group_by_dep('Weekend')
-eve = current_staff.group_by_dep('Eve')
-shpflr = current_staff.group_by_dep('Shopfloor')
-wrhse = current_staff.group_by_dep('Warehouse')
-
 for day in work_rota.days_list:
-    # all scheduled colleagues are determined for the day.
-    daily_coverage = work_rota.day_rota(current_staff, day)
-    # colleagues_off = [col for col in staff.colleagues if
-    # col not in daily_coverage]
-    # for col in colleagues_off:
-    # exc.add_to_spread(self.output_file, col.name(), day)
     # weekend staff are finalised first and the calculating method is only
     # ran on weekend days.
     if day == 'Saturday' or day == 'Sunday':
-        shifun.weekend_shift_calc(work_rota, day, daily_coverage, wknd)
+        shifun.weekend_shift_calc(work_rota, current_staff, day, 'Weekend')
     # next are the departments that only work weekdays.
     if day in work_rota.days_list[1:6]:
-        shifun.eve_shift_calc(work_rota, day, daily_coverage, eve)
-        shifun.warehouse_shift_calc(work_rota, day, daily_coverage, wrhse)
-        shifun.tills_shift_calc(work_rota, day, daily_coverage, tills,
-                                current_staff)
+        shifun.eve_shift_calc(work_rota, current_staff, day, 'Eve')
+        shifun.warehouse_shift_calc(work_rota, current_staff, day, 'Warehouse')
+        shifun.tills_shift_calc(work_rota, current_staff, day, 'Tills')
     # the remaining departments work throughout the entire week and are
     # calculated last.
-    shifun.manager_shift_calc(work_rota, day, daily_coverage, mgrs,
-                              current_staff)
-    shifun.showroom_shift_calc(work_rota, day, daily_coverage, shwrm)
-    shifun.shopfloor_shift_calc(work_rota, day, daily_coverage, shpflr)
+    shifun.manager_shift_calc(work_rota, current_staff, day, mgrs)
+    shifun.showroom_shift_calc(work_rota, current_staff, day, 'Showroom')
+    shifun.shopfloor_shift_calc(work_rota, current_staff, day, 'Shopfloor')
 
 # Display updated week_dict.
 for day in work_rota.week_dict:
     print(day)
-    for col, shift in work_rota.week_dict[day].items():
+    for col, shift in work_rota.day_rota(current_staff, day).items():
         print(f'{col.name()} : {shift}')
