@@ -2,6 +2,7 @@
 # to prevent adding colleagues everytime main program is ran.
 
 import pickle
+import openpyxl
 from staffcolleagueclasses import Staff
 
 # an instance of the staff class is created to store the colleagues.
@@ -35,6 +36,40 @@ staff.add_colleague("O'Hanlon", 'Neil', 'Warehouse', 2, 16)
 staff.add_colleague('Roberts', 'Alexandra', 'Shopfloor', 5, 39, prev_wknd=True)
 staff.add_colleague('Rune', 'Jackson', 'Manager', 5, 39, prev_wknd=False)
 staff.add_colleague('Snell', 'Gabby', 'Showroom', 5, 39, prev_wknd=False)
+
+# initialise dictionary to store the row number of the cell values.
+insert_dict = {}
+# track the department of the iterated colleagues.
+current_dept = None
+# open blank worksheet that contains only the department names in column A and
+# the day name headers.
+wb = openpyxl.load_workbook('blank_week.xlsx')
+sheet = wb.active
+# iterate through the previously added colleagues to add them to the
+# spreadsheet
+for col in staff.colleagues:
+    # if the colleague has a different department from the previous the dict
+    # will be refreshed to prevent overwriting cells.
+    if current_dept != col.department:
+        for cell in list(sheet.columns)[0]:
+            insert_dict[cell.value] = cell.row
+    # the column values for the colleague name and their hours are saved to
+    # variables.
+    name_column = 'A'
+    hrs_column = 'B'
+    # the row value for the new colleague will be the corresponding value of the
+    # department in the dict + 1.
+    new_row = insert_dict[col.department] + 1
+    # a blank row is inserted at the previously determined value.
+    sheet.insert_rows(new_row)
+    # the value for the department is updated
+    insert_dict[col.department] += 1
+    # the relevant info is added to the worksheet.
+    sheet[name_column + str(new_row)] = col.name()
+    sheet[hrs_column + str(new_row)] = col.hours
+# after all colleagues and their hours have been added the file is saved.
+wb.save('testy.xlsx')
+wb.close()
 
 # the staff object containing all the above colleagues is saved to a file
 # called 'current_staff' using the pickle module.
