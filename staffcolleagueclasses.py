@@ -1,3 +1,6 @@
+import excel_feature as ex
+
+
 class Staff:
     """A class to represent the collective staff comprised of
        colleague objects.
@@ -9,10 +12,12 @@ class Staff:
 
     # search for colleague
 
-    def add_colleague(self, last_name, first_name,
-                      department, days, hours, prev_wknd=''):
-        self.colleagues.append(Colleague(last_name, first_name,
-                                         department, days, hours, prev_wknd))
+    def add_colleague(self, row_dict, last_name, first_name, dept, days, hours,
+                      prev_wknd=''):
+        col = Colleague(last_name, first_name, dept, days, hours, prev_wknd)
+        row = ex.col_to_excel('blank_week.xlsx', col, row_dict)
+        row_dict[col.name()] = row
+        self.colleagues.append(col)
 
     def print_staff_list(self):
         [print(f'{colleague.name()}') for colleague in self.colleagues]
