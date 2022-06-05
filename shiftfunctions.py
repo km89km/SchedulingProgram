@@ -1,10 +1,11 @@
 import random
+import excel_feature as ex
 
 early_picks = []
 late_picks = []
 
 
-def weekend_shift_calc(work_rota, staff, day, dept):
+def weekend_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the weekend staff scheduled on the provided
        day. The isolated weekend members are checked against a daily_coverage
        dictionary of the desired day. As these members cover the tills on
@@ -16,18 +17,19 @@ def weekend_shift_calc(work_rota, staff, day, dept):
         for col, length in work_rota.day_rota(staff, day, dept).items():
             start = random.choice(options)
             options.remove(start)
-            shift_result(work_rota, col, day, start, length)
-
+            result = shift_result(work_rota, col, day, start, length)
+            ex.add_to_worksheet(output_file, col.name(), day, result)
     # if not Saturday then the day will be Sunday.
     else:
         options = [13, 13, 14, 14]
         for col, length in work_rota.day_rota(staff, day, dept).items():
             start = random.choice(options)
             options.remove(start)
-            shift_result(work_rota, col, day, start, length)
+            result = shift_result(work_rota, col, day, start, length)
+            ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
-def warehouse_shift_calc(work_rota, staff, day, dept):
+def warehouse_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the warehouse staff scheduled on the provided
        day. The isolated warehouse members are checked against a daily_coverage
        dictionary of the desired day. Mika Fortuna starts at 8 everyday to
@@ -40,20 +42,22 @@ def warehouse_shift_calc(work_rota, staff, day, dept):
             start = 8
         else:
             start = 10
-        shift_result(work_rota, col, day, start, length)
+        result = shift_result(work_rota, col, day, start, length)
+        ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
-def eve_shift_calc(work_rota, staff, day, dept):
+def eve_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the evening staff scheduled on the provided
        day. The isolated evening members are checked against a daily_coverage
        dictionary of the desired day. As all members work 6 - 10, it is quite
        simple.
     """
     for col, length in work_rota.day_rota(staff, day, dept).items():
-        shift_result(work_rota, col, day, 18, length)
+        result = shift_result(work_rota, col, day, 18, length)
+        ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
-def showroom_shift_calc(work_rota, staff, day, dept):
+def showroom_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the showroom staff scheduled on the provided
        day. The isolated showroom members are checked against a daily_coverage
        dictionary of the desired day. Both members work 10 - 7 all days apart
@@ -64,10 +68,11 @@ def showroom_shift_calc(work_rota, staff, day, dept):
     else:
         start = 10
     for col, length in work_rota.day_rota(staff, day, dept).items():
-        shift_result(work_rota, col, day, start, length)
+        result = shift_result(work_rota, col, day, start, length)
+        ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
-def shopfloor_shift_calc(work_rota, staff, day, dept):
+def shopfloor_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the shopfloor staff scheduled on the provided
        day. The isolated shopfloor members are checked against a daily_coverage
        dictionary of the desired day. All members apart from Andrew and Amanda
@@ -87,10 +92,11 @@ def shopfloor_shift_calc(work_rota, staff, day, dept):
             start = 9
         else:
             start = open_time
-        shift_result(work_rota, col, day, start, length)
+        result = shift_result(work_rota, col, day, start, length)
+        ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
-def tills_shift_calc(work_rota, staff, day, dept):
+def tills_shift_calc(work_rota, staff, day, dept, output_file):
     """determines the shifts of the tills staff scheduled on the provided
        day. The isolated tills members are checked against a daily_coverage
        dictionary of the desired day. 2 members are scheduled every weekday
@@ -106,7 +112,8 @@ def tills_shift_calc(work_rota, staff, day, dept):
     for col, length in daily_staff.items():
         start = random.choice(options)
         options.remove(start)
-        shift_result(work_rota, col, day, start, length)
+        result = shift_result(work_rota, col, day, start, length)
+        ex.add_to_worksheet(output_file, col.name(), day, result)
 
 
 def till_shuffle(work_rota, staff):
@@ -153,7 +160,7 @@ def shift_result(work_rota, col, day, start, length):
     return result
 
 
-def manager_shift_calc(work_rota, staff_list, day, mgrs):
+def manager_shift_calc(work_rota, staff_list, day, mgrs, output_file):
     """determines the shifts of the managers scheduled on the provided
        day. The isolated managers are checked against a daily_coverage
        dictionary of the desired day. There must always be a manager in
@@ -167,13 +174,15 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
     if day == 'Sunday':
         for mgr in daily_mgrs:
             work_rota.week_dict['Sunday'][mgr] = '9 - 18'
+            ex.add_to_worksheet(output_file, mgr.name(), day, '9 - 18')
         return None
     if day == 'Saturday':
         options = [8, 10]
         for mgr, length in daily_mgrs.items():
             start = random.choice(options)
             options.remove(start)
-            shift_result(work_rota, mgr, day, start, length)
+            result = shift_result(work_rota, mgr, day, start, length)
+            ex.add_to_worksheet(output_file, mgr.name(), day, result)
         return None
     # For the weekdays, it is necessary to have one manager opening the store
     # and one closing it. This method ensures that each manager does one early
@@ -194,8 +203,9 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
         # start time (7am)and shift length which is the current value associated
         # with the colleague as previously determined by the length_calc
         # function.
-        shift_result(work_rota, e_choice, day, 7,
-                     work_rota.week_dict[day][e_choice])
+        result = shift_result(work_rota, e_choice, day, 7,
+                              work_rota.week_dict[day][e_choice])
+        ex.add_to_worksheet(output_file, e_choice.name(), day, result)
         # this manager is then removed from the choice pool.
         del daily_mgrs[e_choice]
     # if this clause is reached, it indicates that at least one early shift
@@ -212,7 +222,8 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
         # scheduled day where the mgr is not already doing a early/late and
         # returns the length of that shift.
         shift_length = day_off_switch(work_rota, e_choice, staff_list)
-        shift_result(work_rota, e_choice, day, 7, shift_length)
+        result = shift_result(work_rota, e_choice, day, 7, shift_length)
+        ex.add_to_worksheet(output_file, e_choice.name(), day, result)
 
     # the same process as above is then carried out to find who will do the late
     # shifts during the weekdays.
@@ -227,7 +238,8 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
             start = 14
         else:
             start = 13
-        shift_result(work_rota, l_choice, day, start, length)
+        result = shift_result(work_rota, l_choice, day, start, length)
+        ex.add_to_worksheet(output_file, l_choice.name(), day, result)
         del daily_mgrs[l_choice]
 
     else:
@@ -241,7 +253,8 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
             start = 14
         else:
             start = 13
-        shift_result(work_rota, l_choice, day, start, shift_length)
+        result = shift_result(work_rota, l_choice, day, start, shift_length)
+        ex.add_to_worksheet(output_file, l_choice.name(), day, result)
 
     # with the early and late shifts determined, the remaining managers will
     # work a mid shift, 9 - 6.
@@ -251,8 +264,10 @@ def manager_shift_calc(work_rota, staff_list, day, mgrs):
         # 5pm rather than 6pm.
         if length == 8:
             work_rota.week_dict[day][mgr] = '9 - 18'
+            ex.add_to_worksheet(output_file, mgr.name(), day, '9-18')
         else:
             work_rota.week_dict[day][mgr] = '9 - 17'
+            ex.add_to_worksheet(output_file, mgr.name(), day, '9 - 17')
     return None
 
 

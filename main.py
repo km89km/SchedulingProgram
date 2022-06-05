@@ -29,6 +29,9 @@ week_start = datetime.date.fromisoformat(date_input)
 date_list = [week_start + datetime.timedelta(days=x) for x in range(7)]
 day_names = [day.strftime('%A') for day in date_list]
 
+output_file = shifun.ex.date_adder('blank_week.xlsx', date_list)
+
+
 # load staff list from pickled 'current_staff' file.
 with open('current_staff', 'rb') as f:
     current_staff = pickle.load(f)
@@ -69,20 +72,19 @@ for day in work_rota.days_list:
     # weekend staff are finalised first and the calculating method is only
     # ran on weekend days.
     if day == 'Saturday' or day == 'Sunday':
-        shifun.weekend_shift_calc(work_rota, current_staff, day, 'Weekend')
+        shifun.weekend_shift_calc(work_rota, current_staff, day, 'Weekend',
+                                  output_file)
     # next are the departments that only work weekdays.
     if day in work_rota.days_list[1:6]:
-        shifun.eve_shift_calc(work_rota, current_staff, day, 'Eve')
-        shifun.warehouse_shift_calc(work_rota, current_staff, day, 'Warehouse')
-        shifun.tills_shift_calc(work_rota, current_staff, day, 'Tills')
+        shifun.eve_shift_calc(work_rota, current_staff, day, 'Eve', output_file)
+        shifun.warehouse_shift_calc(work_rota, current_staff, day, 'Warehouse',
+                                    output_file)
+        shifun.tills_shift_calc(work_rota, current_staff, day, 'Tills',
+                                output_file)
     # the remaining departments work throughout the entire week and are
     # calculated last.
-    shifun.manager_shift_calc(work_rota, current_staff, day, mgrs)
-    shifun.showroom_shift_calc(work_rota, current_staff, day, 'Showroom')
-    shifun.shopfloor_shift_calc(work_rota, current_staff, day, 'Shopfloor')
-
-# Display updated week_dict.
-for day in work_rota.week_dict:
-    print(day)
-    for col, shift in work_rota.day_rota(current_staff, day).items():
-        print(f'{col.name()} : {shift}')
+    shifun.manager_shift_calc(work_rota, current_staff, day, mgrs, output_file)
+    shifun.showroom_shift_calc(work_rota, current_staff, day, 'Showroom',
+                               output_file)
+    shifun.shopfloor_shift_calc(work_rota, current_staff, day, 'Shopfloor',
+                                output_file)
