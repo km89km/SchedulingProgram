@@ -42,11 +42,7 @@ class WorkRota:
         return result
 
     def colleague_rota(self, colleague):
-        """returns the shifts for the week for each colleague.
-        To work correctly with the week_dict dictionary, the colleague
-        argument must be the name of the colleague, so the colleague.name()
-        method is recommended.
-        """
+        """returns the shifts for the week for each colleague."""
 
         # initialise dictionary to store day/shift pairs.
         result = {}

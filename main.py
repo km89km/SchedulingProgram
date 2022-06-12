@@ -24,13 +24,13 @@ with open('previous_week.txt', 'w') as f:
 
 # correctly format inputted date to allow generation of the dates of the week.
 # this will be useful later when adding the date of each day to the excel
-# spreadsheet.
+# worksheet.
 week_start = datetime.date.fromisoformat(date_input)
 date_list = [week_start + datetime.timedelta(days=x) for x in range(7)]
 day_names = [day.strftime('%A') for day in date_list]
 
+# the dates of each day are added to the blank worksheet.
 output_file = shifun.ex.date_adder('blank_week.xlsx', date_list)
-
 
 # load staff list from pickled 'current_staff' file.
 with open('current_staff', 'rb') as f:
@@ -88,3 +88,8 @@ for day in work_rota.days_list:
                                output_file)
     shifun.shopfloor_shift_calc(work_rota, current_staff, day, 'Shopfloor',
                                 output_file)
+
+# save the staff list to file to ensure that colleagues who worked the weekend
+# will have the following one off.
+with open('current_staff', 'wb') as f:
+    pickle.dump(current_staff, f)

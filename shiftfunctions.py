@@ -86,9 +86,9 @@ def shopfloor_shift_calc(work_rota, staff, day, dept, output_file):
     for col, length in work_rota.day_rota(staff, day, dept).items():
         if day == 'Sunday':
             start = 9
-        elif col.name() == 'Moore, Andrew':
+        elif col.name() == 'Moorehouse, Alan':
             start = 10
-        elif col.name() == 'Robinson, Amanda':
+        elif col.name() == 'Roberts, Alexandra':
             start = 9
         else:
             start = open_time

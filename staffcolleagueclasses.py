@@ -41,6 +41,10 @@ class Colleague:
         self.hours = hours
         self.prev_wknd = prev_wknd
 
+        # there is the option of adding an email address for each colleague to
+        # automatically notify them of their shifts during the coming week.
+        self.email_address = None
+
     def name(self):
         """Returns the name of the colleague object, last name first."""
         return f'{self.last_name}, {self.first_name}'
