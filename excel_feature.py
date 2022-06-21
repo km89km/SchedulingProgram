@@ -61,7 +61,7 @@ def date_adder(worksheet, date_list):
     return output_file
 
 
-def add_to_worksheet(worksheet, colleague, day, shift):
+def add_to_worksheet(worksheet, col_name, day, shift=''):
     """
     Adds final shift for colleague to the supplied spreadsheet.The coordinate
     corresponding to the colleague is determined by combining the column
@@ -74,8 +74,11 @@ def add_to_worksheet(worksheet, colleague, day, shift):
     # the corresponding row and column are assigned to variables for easier
     # combination later on.
     column = day_columns[day]
-    row = str(ws_rows[colleague])
-    sheet[column + row] = shift
+    row = str(ws_rows[col_name])
+    if not shift:
+        sheet[column + row] = 'O'
+    else:
+        sheet[column + row] = shift
     # the changes are saved and the spreadsheet is closed.
     wb.save(worksheet)
     wb.close()

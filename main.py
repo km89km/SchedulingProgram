@@ -3,6 +3,7 @@ import pickle
 import startfunctions as startfunc
 import workrotaclass
 import shiftfunctions as shifun
+# from timeit import default_timer as timer
 
 # retrieve date for previously generated week from external file.
 with open('previous_week.txt', 'r') as f:
@@ -11,12 +12,16 @@ with open('previous_week.txt', 'r') as f:
 # the user is prompted for the date of the week they wish to generate, with the
 # the previously generated week supplied for reference.
 date_input = (input(f'What week would you like to generate? '
-                    f'(The previous generated rota was {previous_date}) : '))
+                    f'(The previous generated rota was {previous_date}. Press '
+                    f'"q" to quit.) : '))
 
-# the input is checked and a while loop is entered until a valid date is.
+# start = timer()
+
+# the input is checked and a while loop is used to verify it.
 while not startfunc.valid_input(date_input):
     date_input = (input(f'What week would you like to generate? '
-                        f'(Use format yyyy-mm-dd, i.e. 2022-01-01) : '))
+                        f'(Use format yyyy-mm-dd, i.e. 2022-01-01. Press "q" to'
+                        f' quit.) : '))
 
 # save current week to file to access next time program is run.
 with open('previous_week.txt', 'w') as f:
@@ -42,9 +47,6 @@ with open('current_staff', 'rb') as f:
 # the day(s) that their previous colleague is absent for better coverage.
 current_staff.colleagues.sort(key=lambda x: x.department)
 
-# group managers together for easy access in later function.
-mgrs = current_staff.group_by_dep('Manager')
-
 # create instance of WorkRota class to store the colleagues and their shifts
 # for the week. The instance will have a initialised dictionary called week_dict
 # that contains an empty sub-dictionary for each day of the week.
@@ -55,41 +57,38 @@ work_rota = workrotaclass.WorkRota()
 # from this point going forward, when possible, the word colleague will be
 # shortened to col to save space.
 for col in current_staff.colleagues:
-    # determines what days the colleague will work and a list of days is saved.
+    # determines what days the col will work and a list of days is saved.
     days = startfunc.days_calc(work_rota, current_staff, col)
     # determines how long the shifts will be. A list of integers representing
     # each shift length is saved.
     lengths = startfunc.length_calc(col)
-    # add colleagues to each day in dictionary with their name as key and
-    # the shift length as value for later expansion.
-    work_rota.add_to_week(col, days, lengths)
+    # join days and lengths together in a dictionary for easier shift
+    # finalisation in next section.
+    # Regarding the managers, the days variable above will be a dictionary
+    # rather than a list so a list of just the worked days is used.
+    if col.department == 'Manager':
+        day_lengths = dict(zip(list(days), lengths))
+    else:
+        day_lengths = dict(zip(days, lengths))
 
-# with each day dictionary of week_dict now filled with the chosen colleagues
-# and their shift lengths, the next step is to use this information to determine
-# the final shifts of the colleagues.
-
-for day in work_rota.days_list:
-    # weekend staff are finalised first and the calculating method is only
-    # ran on weekend days.
-    if day == 'Saturday' or day == 'Sunday':
-        shifun.weekend_shift_calc(work_rota, current_staff, day, 'Weekend',
-                                  output_file)
-    # next are the departments that only work weekdays.
-    if day in work_rota.days_list[1:6]:
-        shifun.eve_shift_calc(work_rota, current_staff, day, 'Eve', output_file)
-        shifun.warehouse_shift_calc(work_rota, current_staff, day, 'Warehouse',
-                                    output_file)
-        shifun.tills_shift_calc(work_rota, current_staff, day, 'Tills',
-                                output_file)
-    # the remaining departments work throughout the entire week and are
-    # calculated last.
-    shifun.manager_shift_calc(work_rota, current_staff, day, mgrs, output_file)
-    shifun.showroom_shift_calc(work_rota, current_staff, day, 'Showroom',
-                               output_file)
-    shifun.shopfloor_shift_calc(work_rota, current_staff, day, 'Shopfloor',
-                                output_file)
+    # the shifts need to be finalised and added first to the week_dict of the
+    # work rota instance and then to the worksheet.
+    for day in work_rota.days_list:
+        # if the colleague is not scheduled for the current day, an 'O' will be
+        # placed in place of a shift in the worksheet.
+        if day not in days:
+            shifun.ex.add_to_worksheet(output_file, col.name(), day)
+        else:
+            if col.department == 'Manager':
+                shifun.shift_calc(output_file, work_rota, col, day, day_lengths,
+                                  days)
+            else:
+                shifun.shift_calc(output_file, work_rota, col, day, day_lengths)
 
 # save the staff list to file to ensure that colleagues who worked the weekend
 # will have the following one off.
 with open('current_staff', 'wb') as f:
     pickle.dump(current_staff, f)
+
+# end = timer()
+# print(end - start)

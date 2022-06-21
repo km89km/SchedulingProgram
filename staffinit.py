@@ -51,7 +51,7 @@ staff.add_colleague(ws_rows, 'McClintock', 'Greg', 'Showroom', 5, 39,
                     prev_wknd=True)
 staff.add_colleague(ws_rows, 'McKinty', 'Cara', 'Weekend', 2, 8)
 staff.add_colleague(ws_rows, 'McKinty', 'Saoirse', 'Tills', 3, 12)
-staff.add_colleague(ws_rows, 'Montgomery', 'Annie', 'Shopfloor', 5, 20)
+staff.add_colleague(ws_rows, 'Montgomery', 'Ann', 'Shopfloor', 5, 20)
 staff.add_colleague(ws_rows, 'Montgomery', 'Cara', 'Eve', 5, 20)
 staff.add_colleague(ws_rows, 'Montgomery', 'Lisa', 'Manager', 5, 39,
                     prev_wknd=True)
