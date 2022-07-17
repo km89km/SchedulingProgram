@@ -1,5 +1,6 @@
 import datetime
 import pickle
+from importlib import reload
 import startfunctions as startfunc
 import workrotaclass
 import shiftfunctions as shifun
@@ -12,6 +13,8 @@ with open('current_staff', 'rb') as f:
 
 
 def populate(current_staff):
+    reload(shifun)
+    reload(startfunc)
     # retrieve date for previously generated week from external file.
     with open('previous_week.txt', 'r') as f:
         previous_date = f.read()
