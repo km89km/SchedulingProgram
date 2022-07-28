@@ -1,6 +1,7 @@
 import os
 import sys
 import IPython
+import pickle
 from pathlib import Path
 import populate
 
@@ -55,8 +56,10 @@ class Menu:
             # added to the final function call; whereas the others only require
             # the mandatory brackets for the function call.
             if outcome:
-                if choice == '1':  # or choice == '3':
-                    outcome(populate.current_staff)
+                if choice == '1':
+                    with open('current_staff', 'rb') as f:
+                        current_staff = pickle.load(f)
+                    outcome(current_staff)
                 else:
                     outcome()
             # if the user puts in an incorrect input, get() will return None and
@@ -66,7 +69,7 @@ class Menu:
 
     @staticmethod
     def prev_schedules():
-        """Displays the previously generated shedules and opens them with the
+        """Displays the previously generated schedules and opens them with the
            designated program for handling excel worksheets.
         """
         # find all excel files in the cwd that are not the blank week template.
@@ -105,7 +108,11 @@ class Menu:
         print('Sorry, there are no saved schedules at the moment.')
         return None
 
-    def display_staff_menu(self):
+    @staticmethod
+    def display_staff_menu():
+        """Displays the staff menu to the User to allow them to view and edit
+           the current staff members.
+        """
         print("""
               1. View/edit/delete colleagues. 
               2. Add colleague. 
@@ -113,9 +120,16 @@ class Menu:
               """
               )
 
-    def print_staff(self):
+    @staticmethod
+    def print_staff():
+        """Prints the current staff members in 3 columnns."""
+        with open('current_staff', 'rb') as f:
+            current_staff = pickle.load(f)
+        # pairs the colleagues with an index for the user to select. Rather than
+        # starting at 0, 1 is added to the index.
         members = [f'{index + 1}. {col.name()}' for index, col in
-                   enumerate(populate.current_staff.colleagues)]
+                   enumerate(current_staff.colleagues)]
+        # prints the above comprehension in 3 columns for neater viewing.
         columnized = IPython.utils.text.columnize(members)
         print(columnized)
 
@@ -129,8 +143,7 @@ class Menu:
             if choice == '1':
                 self.col_menu()
             elif choice == '2':
-                # add method
-                pass
+                self.add_menu()
             elif choice == '3':
                 break
             else:
@@ -138,20 +151,26 @@ class Menu:
                       ' your choice.')
 
     def col_menu(self):
+        """Displays an individual menu for the desired colleague."""
         while True:
             self.print_staff()
+            with open('current_staff', 'rb') as f:
+                current_staff = pickle.load(f)
             choice = input('Please select the number of a colleague to '
                            'continue (Press "q" to return to previous menu) : ')
             if choice.lower() == "q":
                 break
-            elif int(choice) in range(len(populate.current_staff.colleagues)
+            elif int(choice) in range(len(current_staff.colleagues)
                                       + 1):
                 self.col_details(int(choice))
             else:
                 print('That was not a correct choice.')
 
     def col_details(self, index):
-        col = populate.current_staff.colleagues[index - 1]
+        """Displays the details of the selected colleague."""
+        with open('current_staff', 'rb') as f:
+            current_staff = pickle.load(f)
+        col = current_staff.colleagues[index - 1]
         while True:
             print(f'Last name: {col.last_name}', end='\t\t')
             print(f'First name: {col.first_name}', end='\t\t')
@@ -164,9 +183,11 @@ class Menu:
                 print('Alternates weekends : No\n')
             self.display_col_options()
             return None
-            # attrs = [atr for atr in dir(col) if not atr.startswith('__')]
 
-    def display_col_options(self):
+    @staticmethod
+    def display_col_options():
+        """Displays the available options with respect to the desired colleague.
+        """
         while True:
             print('1. Edit\n2. Delete\n3. Exit menu\n')
             choice = int(input('what would you like to do? '))
@@ -182,6 +203,67 @@ class Menu:
                 break
             else:
                 print('That was not correct.')
+        return None
+
+    @staticmethod
+    def add_menu():
+        """Presents the user with prompts for the individual attributes of the
+           prospective colleague.
+        """
+        while True:
+            # departments for reference to safe guard a correct assignment.
+            depts = ['Manager', 'Shopfloor', 'Tills', 'Showroom',
+                     'Warehouse',
+                     'Eve', 'Weekend']
+            first = input('First name: ').title()
+            last = input('Last name: ').title()
+            dept = input('Department: ').title()
+            # prompts user until a valid dept is entered.
+            while dept not in depts:
+                print('That is not a valid department. Here are your options:')
+                print(', '.join(depts))
+                dept = input('Department: ').title()
+            days = input('Days per week: ')
+            # ensures that a correct number of days is entered.
+            while not days.isnumeric() or int(days) not in range(1, 6):
+                print('That is not valid. It must be between 1 and 5.')
+                days = input('Days per week: ')
+            days = int(days)
+            hours = input('Hours per week: ')
+            # ensures a valid number of hours are added.
+            while not hours.isnumeric() or int(hours) not in range(4, 40):
+                print('That is not valid. It must be between 4 and 39.')
+                hours = input('Hours per week: ')
+            hours = int(hours)
+            wknd = input('Alternate weekends? (y/n): ')
+            while wknd.lower() != 'y' and wknd.lower() != 'n':
+                print('The value must be either "y" or "n".')
+                wknd = input('Alternate weekends? (y/n): ')
+            # allows the user to review their inputted details.
+            print(f'\nFirst name: {first}\n'
+                  f'Last name: {last}\n'
+                  f'Department: {dept}\n'
+                  f'Days: {days}\n'
+                  f'Hours: {hours}\n'
+                  f'Alternates weekends: {wknd}')
+            info_check = input('Is the information correct? (y/n) ')
+            if info_check.lower() == 'y':
+                with open('current_staff', 'rb') as cs:
+                    current_staff = pickle.load(cs)
+                with open('ws_rows', 'rb') as rows:
+                    ws_rows = pickle.load(rows)
+                if wknd.lower() == 'y':
+                    current_staff.add_colleague(ws_rows, last, first, dept,
+                                                days, hours, prev_wknd=True)
+                else:
+                    current_staff.add_colleague(ws_rows, last, first, dept,
+                                                days, hours)
+                # the updated current_staff and ws_rows are updated and saved.
+                with open('current_staff', 'wb') as cs:
+                    pickle.dump(current_staff, cs)
+                with open('ws_rows', 'wb') as rows:
+                    pickle.dump(ws_rows, rows)
+                break
         return None
 
 

@@ -7,9 +7,6 @@ import shiftfunctions as shifun
 
 # from timeit import default_timer as timer
 
-# load staff list from pickled 'current_staff' file.
-with open('current_staff', 'rb') as f:
-    current_staff = pickle.load(f)
 
 
 def populate(current_staff):
