@@ -1,9 +1,12 @@
 import openpyxl
 import pickle
+from openpyxl.styles import Alignment
 
+"""
 # import dictionary ws_rows containing the rows assigned to each colleague.
 with open('ws_rows', 'rb') as f:
     ws_rows = pickle.load(f)
+"""
 
 # map the column letter to corresponding day in 'blank_week' spreadsheet.
 # days are hardcoded as they will never change.
@@ -31,8 +34,14 @@ def col_to_excel(excel_file, col, row_dict):
     # the relevant info is added to the worksheet. Column A contains
     # the dept headings and therefore, the col's are placed under
     # the corresponding one. B is for the colleague hours.
-    sheet['A' + str(new_row)] = col.name()
-    sheet['B' + str(new_row)] = col.hours
+    # The correct alignment is insured using the imported Alignment class from
+    # openpyxl.styles.
+    name_cell = 'A' + str(new_row)
+    hours_cell = 'B' + str(new_row)
+    sheet[name_cell] = col.name()
+    sheet[name_cell].alignment = Alignment(horizontal="left")
+    sheet[hours_cell] = col.hours
+    sheet[hours_cell].alignment = Alignment(horizontal="left")
     wb.save(excel_file)
     wb.close()
     return new_row
@@ -71,6 +80,8 @@ def add_to_worksheet(worksheet, col_name, day, shift=''):
     # open the desired spreadsheet and determine the active sheet.
     wb = openpyxl.load_workbook(worksheet)
     sheet = wb.active
+    with open('ws_rows', 'rb') as f:
+        ws_rows = pickle.load(f)
     # the corresponding row and column are assigned to variables for easier
     # combination later on.
     column = day_columns[day]

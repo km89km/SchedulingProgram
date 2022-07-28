@@ -59,12 +59,3 @@ class WorkRota:
         """
         self.current_dept = colleague.department
         return None
-
-    def add_to_week(self, col, days, lengths):
-        """adds each colleague to their days inside week_dict, along with the
-           length of the shift to be have start time generated later on.
-        """
-        for index, day in enumerate(days):
-            length = lengths[index]
-            self.week_dict[day][col] = length
-        return ''
