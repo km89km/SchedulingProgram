@@ -130,7 +130,7 @@ class Menu:
         members = [f'{index + 1}. {col.name()}' for index, col in
                    enumerate(current_staff.colleagues)]
         # prints the above comprehension in 3 columns for neater viewing.
-        columnized = IPython.utils.text.columnize(members)
+        columnized = IPython.utils.text.columnize(members, displaywidth=110)
         print(columnized)
 
     def open_staff_menu(self):
@@ -172,6 +172,7 @@ class Menu:
             current_staff = pickle.load(f)
         col = current_staff.colleagues[index - 1]
         while True:
+            print()
             print(f'Last name: {col.last_name}', end='\t\t')
             print(f'First name: {col.first_name}', end='\t\t')
             print(f'Department: {col.department}', )
@@ -181,18 +182,18 @@ class Menu:
                 print('Alternates weekends : Yes\n')
             else:
                 print('Alternates weekends : No\n')
-            self.display_col_options()
+            self.display_col_options(col)
             return None
 
-    @staticmethod
-    def display_col_options():
+    def display_col_options(self, col):
         """Displays the available options with respect to the desired colleague.
         """
         while True:
             print('1. Edit\n2. Delete\n3. Exit menu\n')
+            # CATCH EXCEPTIONS
             choice = int(input('what would you like to do? '))
             if choice == 1:
-                print('foo')  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
+                self.edit_menu(col)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
             elif choice == 2:
                 final_dec = input('Are you sure you want to delete this '
                                   'colleague? It cannot be undone. Y/N : ')
@@ -205,6 +206,47 @@ class Menu:
                 print('That was not correct.')
         return None
 
+    def edit_menu(self, col):
+        # have the col attrs for convenience
+        options = ['last_name', 'first_name', 'department', 'hours', 'days',
+                   'prev_wknd']
+        while True:
+            # display the attrs for the user to see along with a number for them
+            # to choose.
+            print()
+            for index, value in enumerate(options):
+                # any attr that has contains an underslash will have it removed
+                # and the full name in title case.
+                if '_' in value:
+                    print(f'{index+1}. {value.replace("_", " ").title()}')
+                elif value == 'prev_wknd':
+                    print(f'{index+1}. Alternates Weekends')
+                else:
+                    print(f'{index+1}. {value.title()}')
+            choice = input('\nPlease select the number of attribute to edit '
+                           '(press "q" to quit): ')
+            # deal first when with user wants to edit a attr and has entered the
+            # correct number.
+            if choice == 'q':
+                break
+            try:
+                if int(choice) in range(len(options) + 1):
+                    # minus 1 to have the correct index with respect
+                    # to the options.
+                    choice = int(choice) - 1
+                    new_value = input(f'Please enter new value for '
+                                      f'"{options[choice]}" or press "q" to exit: '
+                                      f'')
+                    if new_value == 'q':
+                        break
+                    check = input('Are you happy with this value ("y/n") : ')
+                    if check == 'y':
+                        col.options[choice] = new_value
+                        return None
+            except ValueError:
+                print('That is not a correct value. Please try again.')
+            else:
+                print('That number is out of range. Please try again.')
     @staticmethod
     def add_menu():
         """Presents the user with prompts for the individual attributes of the
