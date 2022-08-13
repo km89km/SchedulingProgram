@@ -153,6 +153,7 @@ class Menu:
     def col_menu(self):
         """Displays an individual menu for the desired colleague."""
         while True:
+            print()
             self.print_staff()
             with open('current_staff', 'rb') as f:
                 current_staff = pickle.load(f)
@@ -182,10 +183,10 @@ class Menu:
                 print('Alternates weekends : Yes\n')
             else:
                 print('Alternates weekends : No\n')
-            self.display_col_options(col)
+            self.display_col_options(col, current_staff)
             return None
 
-    def display_col_options(self, col):
+    def display_col_options(self, col, staff):
         """Displays the available options with respect to the desired colleague.
         """
         while True:
@@ -193,7 +194,7 @@ class Menu:
             # CATCH EXCEPTIONS
             choice = int(input('what would you like to do? '))
             if choice == 1:
-                self.edit_menu(col)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
+                self.edit_menu(col, staff)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
             elif choice == 2:
                 final_dec = input('Are you sure you want to delete this '
                                   'colleague? It cannot be undone. Y/N : ')
@@ -206,7 +207,9 @@ class Menu:
                 print('That was not correct.')
         return None
 
-    def edit_menu(self, col):
+
+
+    def edit_menu(self, col, staff):
         # have the col attrs for convenience
         options = ['last_name', 'first_name', 'department', 'hours', 'days',
                    'prev_wknd']
@@ -215,36 +218,55 @@ class Menu:
             # to choose.
             print()
             for index, value in enumerate(options):
-                # any attr that has contains an underslash will have it removed
-                # and the full name in title case.
+                # any attr that contains an underslash will have it removed
+                # and the full name will be presented in title case.
                 if '_' in value:
-                    print(f'{index+1}. {value.replace("_", " ").title()}')
+                    print(f'{index + 1}. {value.replace("_", " ").title()}')
                 elif value == 'prev_wknd':
-                    print(f'{index+1}. Alternates Weekends')
+                    print(f'{index + 1}. Alternates Weekends')
                 else:
-                    print(f'{index+1}. {value.title()}')
+                    print(f'{index + 1}. {value.title()}')
             choice = input('\nPlease select the number of attribute to edit '
                            '(press "q" to quit): ')
-            # deal first when with user wants to edit a attr and has entered the
-            # correct number.
+            # if user wants to go back to previous menu.
             if choice == 'q':
                 break
+            # if the user correctly enter a valid number we format the choice to
+            # present to them so that they know they are editing the chosen
+            # attribute.
             try:
                 if int(choice) in range(len(options) + 1):
                     # minus 1 to have the correct index with respect
                     # to the options.
                     choice = int(choice) - 1
+                    if choice == 0 or choice == 1:
+                        result = options[choice].replace("_", " ").title()
+                    elif choice == 5:
+                        result = 'Alternates Weekends'
+                    else:
+                        result = options[choice].title()
+
+                    # the user is prompted for their desired new value.
                     new_value = input(f'Please enter new value for '
-                                      f'"{options[choice]}" or press "q" to exit: '
-                                      f'')
+                                      f'"{result}" or press "q" to exit: ')
                     if new_value == 'q':
                         break
+                    elif choice == 3 or choice == 4:
+                        new_value = int(new_value)
+                    # the user is prompted to confirm the change.
                     check = input('Are you happy with this value ("y/n") : ')
-                    if check == 'y':
-                        col.options[choice] = new_value
+                    if check == "y":
+                        # using the setattr function, the col object has the
+                        # chosen attribute changed to the new value.
+                        setattr(col, options[choice], new_value)
+                        # the change is saved.
+                        with open('current_staff', 'wb') as f:
+                            pickle.dump(staff, f)
                         return None
+            # if a non_numeric value is entered, the exception is caught.
             except ValueError:
                 print('That is not a correct value. Please try again.')
+            # likewise, a number out of range will also be dealt with.
             else:
                 print('That number is out of range. Please try again.')
     @staticmethod
