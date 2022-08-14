@@ -2,6 +2,7 @@ import os
 import sys
 import IPython
 import pickle
+import openpyxl
 from pathlib import Path
 import populate
 
@@ -194,7 +195,8 @@ class Menu:
             # CATCH EXCEPTIONS
             choice = int(input('what would you like to do? '))
             if choice == 1:
-                self.edit_menu(col, staff)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
+                self.edit_menu(col,
+                               staff)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
             elif choice == 2:
                 final_dec = input('Are you sure you want to delete this '
                                   'colleague? It cannot be undone. Y/N : ')
@@ -207,12 +209,13 @@ class Menu:
                 print('That was not correct.')
         return None
 
-
-
     def edit_menu(self, col, staff):
         # have the col attrs for convenience
         options = ['last_name', 'first_name', 'department', 'hours', 'days',
                    'prev_wknd']
+        # save col name to variable now as it will make finding the col's row in
+        # worksheet easier, especially if changes will be made to their name.
+        col_name = col.name()
         while True:
             # display the attrs for the user to see along with a number for them
             # to choose.
@@ -259,16 +262,52 @@ class Menu:
                         # using the setattr function, the col object has the
                         # chosen attribute changed to the new value.
                         setattr(col, options[choice], new_value)
-                        # the change is saved.
+                        # the current_staff file is modified to reflect the
+                        # change.
                         with open('current_staff', 'wb') as f:
                             pickle.dump(staff, f)
-                        return None
+                        # the row of the colleague is needed to update the blank
+                        # worksheet.
+                        with open('ws_rows', 'rb') as g:
+                            rows = pickle.load(g)
+                        # open the spreadsheet to allow modification.
+                        wb = openpyxl.load_workbook('blank_week.xlsx')
+                        sheet = wb.active
+                        # find the col's row from the opened row dictionary
+                        # based on the key being the col name.
+                        col_row = rows[col_name]
+                        # if the change is to the name of the col the worksheet
+                        # and the ws_rows need to be modified and saved.
+                        if options[choice] == 'first_name' or options[
+                            choice] == 'last_name':
+                            # Column 'A' contains the colleague names.
+                            column = 'A'
+                            # combine the column and row for the cell value and
+                            # set it to the new name value.
+                            sheet[column + str(col_row)] = col.name()
+                            wb.save('blank_week.xlsx')
+                            wb.close()
+                            # create a new key in the row dict with the modified
+                            # name, saving the previous row value.
+                            rows[col.name()] = rows.pop(col_name)
+                            with open('ws_rows', 'wb') as g:
+                                pickle.dump(rows, g)
+                        # A change to the hours value is the other value that
+                        # requires updating the worksheet.
+                        else:
+                            # Column 'B' contains the col's hours.
+                            column = 'B'
+                            sheet[column + str(col_row)] = new_value
+                            wb.save('blank_week.xlsx')
+                            wb.close()
+                    return None
             # if a non_numeric value is entered, the exception is caught.
             except ValueError:
                 print('That is not a correct value. Please try again.')
             # likewise, a number out of range will also be dealt with.
             else:
                 print('That number is out of range. Please try again.')
+
     @staticmethod
     def add_menu():
         """Presents the user with prompts for the individual attributes of the

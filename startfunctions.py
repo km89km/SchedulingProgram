@@ -180,7 +180,7 @@ def weekend_check(col):
     """Function that accepts a colleague and if they have a prev_wknd attribute,
        inverts the value and initialises a list containing the relevant weekend
        day to the returned and added to later on. Returns None if the colleague
-       does not have the attribute.
+       has an empty attribute.
     """
     if col.prev_wknd:
         # change value so that following weekend is worked.
