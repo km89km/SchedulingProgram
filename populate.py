@@ -5,11 +5,9 @@ import startfunctions as startfunc
 import workrotaclass
 import shiftfunctions as shifun
 
-# from timeit import default_timer as timer
-
-
 
 def populate(current_staff):
+    """Main function for generating the weekly shifts of the staff members."""
     reload(shifun)
     reload(startfunc)
     # retrieve date for previously generated week from external file.
@@ -97,7 +95,3 @@ def populate(current_staff):
         pickle.dump(current_staff, f)
 
     return None
-
-
-# end = timer()
-# print(end - start)

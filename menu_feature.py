@@ -123,7 +123,7 @@ class Menu:
 
     @staticmethod
     def print_staff():
-        """Prints the current staff members in 3 columnns."""
+        """Prints the current staff members in 3 columns."""
         with open('current_staff', 'rb') as f:
             current_staff = pickle.load(f)
         # pairs the colleagues with an index for the user to select. Rather than
@@ -209,7 +209,8 @@ class Menu:
                 print('That was not correct.')
         return None
 
-    def edit_menu(self, col, staff):
+    @staticmethod
+    def edit_menu(col, staff):
         # have the col attrs for convenience
         options = ['last_name', 'first_name', 'department', 'hours', 'days',
                    'prev_wknd']
@@ -221,7 +222,7 @@ class Menu:
             # to choose.
             print()
             for index, value in enumerate(options):
-                # any attr that contains an underslash will have it removed
+                # any attr that contains an underscore will have it removed
                 # and the full name will be presented in title case.
                 if '_' in value:
                     print(f'{index + 1}. {value.replace("_", " ").title()}')
@@ -278,8 +279,8 @@ class Menu:
                         col_row = rows[col_name]
                         # if the change is to the name of the col the worksheet
                         # and the ws_rows need to be modified and saved.
-                        if options[choice] == 'first_name' or options[
-                            choice] == 'last_name':
+                        if options[choice] == 'first_name' or \
+                                              options[choice] == 'last_name':
                             # Column 'A' contains the colleague names.
                             column = 'A'
                             # combine the column and row for the cell value and
@@ -292,14 +293,36 @@ class Menu:
                             rows[col.name()] = rows.pop(col_name)
                             with open('ws_rows', 'wb') as g:
                                 pickle.dump(rows, g)
-                        # A change to the hours value is the other value that
+                        # A change to the hours value another value that
                         # requires updating the worksheet.
-                        else:
+                        elif options[choice] == 'hours':
                             # Column 'B' contains the col's hours.
                             column = 'B'
                             sheet[column + str(col_row)] = new_value
                             wb.save('blank_week.xlsx')
                             wb.close()
+                        # with a change in department, the current row of the
+                        # colleague is found, deleted and then the
+                        # col_to_excel() function will add the colleague to
+                        # their new department.
+                        elif options[choice] == 'department':
+                            # find the current row of col.
+                            row = rows[col_name]
+                            # remove from old dept.
+                            sheet.delete_rows(row)
+                            wb.save('blank_week.xlsx')
+                            # add col to new department. Function returns new
+                            # row number and also saves the worksheet.
+                            new_row = populate.shifun.ex.col_to_excel(
+                                'blank_week.xlsx',
+                                col, rows, row)
+                            # update row_dict in ws_rows.
+                            rows[col_name] = new_row
+                            for key, value in rows.items():
+                                print(f'{key} : {value}')
+                            # save to file.
+                            with open('ws_rows', 'wb') as g:
+                                pickle.dump(rows, g)
                     return None
             # if a non_numeric value is entered, the exception is caught.
             except ValueError:

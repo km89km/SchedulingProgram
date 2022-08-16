@@ -2,12 +2,6 @@ import openpyxl
 import pickle
 from openpyxl.styles import Alignment
 
-"""
-# import dictionary ws_rows containing the rows assigned to each colleague.
-with open('ws_rows', 'rb') as f:
-    ws_rows = pickle.load(f)
-"""
-
 # map the column letter to corresponding day in 'blank_week' spreadsheet.
 # days are hardcoded as they will never change.
 day_columns = {'Sunday': 'C', 'Monday': 'D', 'Tuesday': 'E',
@@ -15,20 +9,32 @@ day_columns = {'Sunday': 'C', 'Monday': 'D', 'Tuesday': 'E',
                'Saturday': 'I'}
 
 
-# function to increase relevant row numbers by 1 after insertion of col into
-# worksheet.
-def row_updater(row, row_dict):
+def row_updater(row, row_dict, cut_off=''):
+    """When colleague is added/removed/has department changed, the row numbers
+       of the colleagues need to be adjusted. The parameters are the row of the
+       colleague in question, the dictionary containing the mapped row numbers
+       and an optional cut_off parameter that is supplied when a colleague
+       changes department. When their current row is deleted, all rows after are
+       automatically adjusted and don't need to be increased."""
     for key, value in row_dict.items():
-        if value >= row:
-            row_dict[key] += 1
+        # if cut-off row number is supplied, we increase the other rows up until
+        # this row.
+        if cut_off:
+            if row <= value < cut_off:
+                row_dict[key] += 1
+        else:
+            if value >= row:
+                row_dict[key] += 1
 
 
-def col_to_excel(excel_file, col, row_dict):
+def col_to_excel(excel_file, col, row_dict, cutoff=''):
+    """Adds a col to the work_sheet and returns the row number in the
+       worksheet."""
     wb = openpyxl.load_workbook(excel_file)
     sheet = wb.active
     new_row = row_dict[col.department] + 1
     # the values for the relevant rows are increased by 1.
-    row_updater(new_row, row_dict)
+    row_updater(new_row, row_dict, cutoff)
     # a blank row is inserted at the previously determined value.
     sheet.insert_rows(new_row)
     # the relevant info is added to the worksheet. Column A contains
