@@ -19,7 +19,12 @@ def row_updater(row, row_dict, cut_off=''):
     for key, value in row_dict.items():
         # if cut-off row number is supplied, we increase the other rows up until
         # this row.
-        if cut_off:
+        # if colleague is deleted, the cut off will be the same row.
+        if cut_off == row:
+            if value >= row:
+                row_dict[key] -= 1
+        # if a col is moved, the rows are updated until the previous value.
+        elif cut_off:
             if row <= value < cut_off:
                 row_dict[key] += 1
         else:

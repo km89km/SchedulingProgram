@@ -195,19 +195,41 @@ class Menu:
             # CATCH EXCEPTIONS
             choice = int(input('what would you like to do? '))
             if choice == 1:
-                self.edit_menu(col,
-                               staff)  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
+                self.edit_menu(col, staff)
             elif choice == 2:
                 final_dec = input('Are you sure you want to delete this '
                                   'colleague? It cannot be undone. Y/N : ')
                 if final_dec.upper() == 'Y':
-                    print('foo')  # REMOVE COL FROM CURRENT_STAFF AND DUMP
-                    # REMOVE COL FROM EXCEL AND UPDATE WS_ROWS
+                    self.delete_col(col, staff, 'ws_rows', 'blank_week.xlsx')
+                    break
+                else:
+                    break
             elif choice == 3:
                 break
             else:
                 print('That was not correct.')
         return None
+
+    @staticmethod
+    def delete_col(col, staff, row_dict, worksheet):
+        """Removes col from system. This involves removing them from the
+           blank week template, the current staff file and the rows dictionary.
+        """
+        with open(row_dict, 'rb') as f:
+            rows = pickle.load(f)
+        col_row = rows[col.name()]
+        del rows[col.name()]
+        populate.shifun.ex.row_updater(col_row, rows, col_row)
+        with open('ws_rows', 'wb') as f:
+            pickle.dump(rows, f)
+        staff.colleagues.remove(col)
+        with open('current_staff', 'wb') as g:
+            pickle.dump(staff, g)
+        wb = openpyxl.load_workbook(worksheet)
+        sheet = wb.active
+        sheet.delete_rows(col_row)
+        wb.save(worksheet)
+        wb.close()
 
     @staticmethod
     def edit_menu(col, staff):
