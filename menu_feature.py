@@ -181,9 +181,14 @@ class Menu:
             print(f'Days: {col.days}', end='\t\t')
             print(f'Hours: {col.hours}', end='\t\t')
             if col.prev_wknd != '':
-                print('Alternates weekends : Yes\n')
+                print('Alternates weekends : Yes\t\t')
             else:
-                print('Alternates weekends : No\n')
+                print('Alternates weekends : No\t\t')
+            try:
+                if col.email_address:
+                    print(f'Email address: {col.email_address}\n')
+            except AttributeError:
+                print(f'Email address: N/A\n')
             self.display_col_options(col, current_staff)
             return None
 
@@ -235,7 +240,7 @@ class Menu:
     def edit_menu(col, staff):
         # have the col attrs for convenience
         options = ['last_name', 'first_name', 'department', 'hours', 'days',
-                   'prev_wknd']
+                   'prev_wknd', 'email_address']
         # save col name to variable now as it will make finding the col's row in
         # worksheet easier, especially if changes will be made to their name.
         col_name = col.name()
@@ -265,7 +270,7 @@ class Menu:
                     # minus 1 to have the correct index with respect
                     # to the options.
                     choice = int(choice) - 1
-                    if choice == 0 or choice == 1:
+                    if choice == 0 or choice == 1 or choice == 6:
                         result = options[choice].replace("_", " ").title()
                     elif choice == 5:
                         result = 'Alternates Weekends'

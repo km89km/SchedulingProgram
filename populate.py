@@ -4,6 +4,7 @@ from importlib import reload
 import startfunctions as startfunc
 import workrotaclass
 import shiftfunctions as shifun
+import email_feature as email
 
 
 def populate(current_staff):
@@ -93,5 +94,13 @@ def populate(current_staff):
     # weekend will have the following one off.
     with open('current_staff', 'wb') as f:
         pickle.dump(current_staff, f)
+    # the generated shifts will then be sent to the cols with a registered email
+    # address.
+    for col in current_staff.colleagues:
+        try:
+            if col.email_address:
+                email.email_rota(col, date_input, work_rota)
+        except AttributeError:
+            pass
 
     return None
