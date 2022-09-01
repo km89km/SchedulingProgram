@@ -162,13 +162,15 @@ class Menu:
                 current_staff = pickle.load(f)
             choice = input('Please select the number of a colleague to '
                            'continue (Press "q" to return to previous menu) : ')
-            if choice.lower() == "q":
-                break
-            elif int(choice) in range(len(current_staff.colleagues)
-                                      + 1):
-                self.col_details(int(choice))
-            else:
+            try:
+                if int(choice) in range(1, len(current_staff.colleagues) + 1):
+                    self.col_details(int(choice))
+            except ValueError:
+                if choice.lower() == 'q':
+                    return None
                 print('That was not a correct choice.')
+            else:
+                print('Value out of Range.')
 
     def col_details(self, index):
         """Displays the details of the selected colleague."""

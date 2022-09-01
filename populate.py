@@ -9,8 +9,6 @@ import email_feature as email
 
 def populate(current_staff, date_input):
     """Main function for generating the weekly shifts of the staff members."""
-    reload(shifun)
-    reload(startfunc)
     # save current week to file to access next time program is run.
     with open('previous_week.txt', 'w') as f:
         f.write(date_input)
