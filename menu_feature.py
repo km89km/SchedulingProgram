@@ -58,9 +58,11 @@ class Menu:
             # the mandatory brackets for the function call.
             if outcome:
                 if choice == '1':
-                    with open('current_staff', 'rb') as f:
-                        current_staff = pickle.load(f)
-                    outcome(current_staff)
+                    date_input = populate.startfunc.pre_populate()
+                    if date_input:
+                        with open('current_staff', 'rb') as f:
+                            current_staff = pickle.load(f)
+                        outcome(current_staff, date_input)
                 else:
                     outcome()
             # if the user puts in an incorrect input, get() will return None and
