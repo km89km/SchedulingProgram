@@ -18,8 +18,6 @@ def valid_input(date_input):
         # False.
         if date_input.lower() == 'q':
             return None
-        print(
-            'Incorrect date entered. Use format yyyy-mm-dd, i.e. 2022-01-01.')
         return False
     return True
 
@@ -33,14 +31,16 @@ def pre_populate():
     date_input = (input(f'What week would you like to generate? '
                         f'(The previous generated rota was {previous_date}. '
                         f'Press "q" to return to main menu.) : '))
-    if date_input.lower() == 'q':
-        return None
 
     # the input is checked and a while loop is used to verify it.
     while not valid_input(date_input):
+        if date_input.lower() == 'q':
+            return None
+        print(
+            'Incorrect date entered. Use format yyyy-mm-dd, i.e. 2022-01-01.')
         date_input = (input(f'What week would you like to generate? '
-                            f'(Use format yyyy-mm-dd, i.e. 2022-01-01. '
-                            f'Press "q" to quit.) : '))
+                            f'(The previous generated rota was {previous_date}. '
+                        f'Press "q" to return to main menu.) : '))
     return date_input
 
 
