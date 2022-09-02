@@ -369,30 +369,42 @@ class Menu:
         """
         while True:
             # departments for reference to safe guard a correct assignment.
-            depts = ['Manager', 'Shopfloor', 'Tills', 'Showroom',
-                     'Warehouse',
+            depts = ['Manager', 'Shopfloor', 'Tills', 'Showroom', 'Warehouse',
                      'Eve', 'Weekend']
+            print('Press "q" at any time to exit.')
             first = input('First name: ').title()
+            if first == 'Q':
+                break
             last = input('Last name: ').title()
-            dept = input('Department: ').title()
+            if last == 'Q':
+                break
+            dept = input(f"Department ({', '.join(depts)}): ").title()
+            if dept == 'Q':
+                break
             # prompts user until a valid dept is entered.
             while dept not in depts:
                 print('That is not a valid department. Here are your options:')
                 print(', '.join(depts))
                 dept = input('Department: ').title()
             days = input('Days per week: ')
+            if days.lower() == 'q':
+                break
             # ensures that a correct number of days is entered.
             while not days.isnumeric() or int(days) not in range(1, 6):
                 print('That is not valid. It must be between 1 and 5.')
                 days = input('Days per week: ')
             days = int(days)
             hours = input('Hours per week: ')
+            if hours.lower() == 'q':
+                break
             # ensures a valid number of hours are added.
             while not hours.isnumeric() or int(hours) not in range(4, 40):
                 print('That is not valid. It must be between 4 and 39.')
                 hours = input('Hours per week: ')
             hours = int(hours)
             wknd = input('Alternate weekends? (y/n): ')
+            if wknd.lower() == 'q':
+                break
             while wknd.lower() != 'y' and wknd.lower() != 'n':
                 print('The value must be either "y" or "n".')
                 wknd = input('Alternate weekends? (y/n): ')
