@@ -4,32 +4,11 @@ from importlib import reload
 import startfunctions as startfunc
 import workrotaclass
 import shiftfunctions as shifun
-
-# from timeit import default_timer as timer
-
+import email_feature as email
 
 
-def populate(current_staff):
-    reload(shifun)
-    reload(startfunc)
-    # retrieve date for previously generated week from external file.
-    with open('previous_week.txt', 'r') as f:
-        previous_date = f.read()
-
-    # the user is prompted for the date of the week they wish to generate,
-    # with the the previously generated week supplied for reference.
-    date_input = (input(f'What week would you like to generate? '
-                        f'(The previous generated rota was {previous_date}. '
-                        f'Press "q" to quit.) : '))
-
-    # start = timer()
-
-    # the input is checked and a while loop is used to verify it.
-    while not startfunc.valid_input(date_input):
-        date_input = (input(f'What week would you like to generate? '
-                            f'(Use format yyyy-mm-dd, i.e. 2022-01-01. '
-                            f'Press "q" to quit.) : '))
-
+def populate(current_staff, date_input):
+    """Main function for generating the weekly shifts of the staff members."""
     # save current week to file to access next time program is run.
     with open('previous_week.txt', 'w') as f:
         f.write(date_input)
@@ -95,9 +74,13 @@ def populate(current_staff):
     # weekend will have the following one off.
     with open('current_staff', 'wb') as f:
         pickle.dump(current_staff, f)
+    # the generated shifts will then be sent to the cols with a registered email
+    # address.
+    for col in current_staff.colleagues:
+        try:
+            if col.email_address:
+                email.email_rota(col, date_input, work_rota)
+        except AttributeError:
+            pass
 
     return None
-
-
-# end = timer()
-# print(end - start)

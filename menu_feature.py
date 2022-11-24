@@ -2,6 +2,7 @@ import os
 import sys
 import IPython
 import pickle
+import openpyxl
 from pathlib import Path
 import populate
 
@@ -57,9 +58,11 @@ class Menu:
             # the mandatory brackets for the function call.
             if outcome:
                 if choice == '1':
-                    with open('current_staff', 'rb') as f:
-                        current_staff = pickle.load(f)
-                    outcome(current_staff)
+                    date_input = populate.startfunc.pre_populate()
+                    if date_input:
+                        with open('current_staff', 'rb') as f:
+                            current_staff = pickle.load(f)
+                        outcome(current_staff, date_input)
                 else:
                     outcome()
             # if the user puts in an incorrect input, get() will return None and
@@ -122,7 +125,7 @@ class Menu:
 
     @staticmethod
     def print_staff():
-        """Prints the current staff members in 3 columnns."""
+        """Prints the current staff members in 3 columns."""
         with open('current_staff', 'rb') as f:
             current_staff = pickle.load(f)
         # pairs the colleagues with an index for the user to select. Rather than
@@ -130,7 +133,7 @@ class Menu:
         members = [f'{index + 1}. {col.name()}' for index, col in
                    enumerate(current_staff.colleagues)]
         # prints the above comprehension in 3 columns for neater viewing.
-        columnized = IPython.utils.text.columnize(members)
+        columnized = IPython.utils.text.columnize(members, displaywidth=110)
         print(columnized)
 
     def open_staff_menu(self):
@@ -153,18 +156,21 @@ class Menu:
     def col_menu(self):
         """Displays an individual menu for the desired colleague."""
         while True:
+            print()
             self.print_staff()
             with open('current_staff', 'rb') as f:
                 current_staff = pickle.load(f)
             choice = input('Please select the number of a colleague to '
                            'continue (Press "q" to return to previous menu) : ')
-            if choice.lower() == "q":
-                break
-            elif int(choice) in range(len(current_staff.colleagues)
-                                      + 1):
-                self.col_details(int(choice))
-            else:
+            try:
+                if int(choice) in range(1, len(current_staff.colleagues) + 1):
+                    self.col_details(int(choice))
+            except ValueError:
+                if choice.lower() == 'q':
+                    return None
                 print('That was not a correct choice.')
+            else:
+                print('Value out of Range.')
 
     def col_details(self, index):
         """Displays the details of the selected colleague."""
@@ -172,38 +178,189 @@ class Menu:
             current_staff = pickle.load(f)
         col = current_staff.colleagues[index - 1]
         while True:
+            print()
             print(f'Last name: {col.last_name}', end='\t\t')
             print(f'First name: {col.first_name}', end='\t\t')
             print(f'Department: {col.department}', )
             print(f'Days: {col.days}', end='\t\t')
             print(f'Hours: {col.hours}', end='\t\t')
             if col.prev_wknd != '':
-                print('Alternates weekends : Yes\n')
+                print('Alternates weekends : Yes\t\t')
             else:
-                print('Alternates weekends : No\n')
-            self.display_col_options()
+                print('Alternates weekends : No\t\t')
+            try:
+                if col.email_address:
+                    print(f'Email address: {col.email_address}\n')
+            except AttributeError:
+                print(f'Email address: N/A\n')
+            self.display_col_options(col, current_staff)
             return None
 
-    @staticmethod
-    def display_col_options():
+    def display_col_options(self, col, staff):
         """Displays the available options with respect to the desired colleague.
         """
         while True:
             print('1. Edit\n2. Delete\n3. Exit menu\n')
+            # CATCH EXCEPTIONS
             choice = int(input('what would you like to do? '))
             if choice == 1:
-                print('foo')  # DISPLAY COLLEAGUE ATTRIBUTES WITH INDEX
+                self.edit_menu(col, staff)
             elif choice == 2:
                 final_dec = input('Are you sure you want to delete this '
                                   'colleague? It cannot be undone. Y/N : ')
                 if final_dec.upper() == 'Y':
-                    print('foo')  # REMOVE COL FROM CURRENT_STAFF AND DUMP
-                    # REMOVE COL FROM EXCEL AND UPDATE WS_ROWS
+                    self.delete_col(col, staff, 'ws_rows', 'blank_week.xlsx')
+                    break
+                else:
+                    break
             elif choice == 3:
                 break
             else:
                 print('That was not correct.')
         return None
+
+    @staticmethod
+    def delete_col(col, staff, row_dict, worksheet):
+        """Removes col from system. This involves removing them from the
+           blank week template, the current staff file and the rows dictionary.
+        """
+        with open(row_dict, 'rb') as f:
+            rows = pickle.load(f)
+        col_row = rows[col.name()]
+        del rows[col.name()]
+        populate.shifun.ex.row_updater(col_row, rows, col_row)
+        with open('ws_rows', 'wb') as f:
+            pickle.dump(rows, f)
+        staff.colleagues.remove(col)
+        with open('current_staff', 'wb') as g:
+            pickle.dump(staff, g)
+        wb = openpyxl.load_workbook(worksheet)
+        sheet = wb.active
+        sheet.delete_rows(col_row)
+        wb.save(worksheet)
+        wb.close()
+
+    @staticmethod
+    def edit_menu(col, staff):
+        # have the col attrs for convenience
+        options = ['last_name', 'first_name', 'department', 'hours', 'days',
+                   'prev_wknd', 'email_address']
+        # save col name to variable now as it will make finding the col's row in
+        # worksheet easier, especially if changes will be made to their name.
+        col_name = col.name()
+        while True:
+            # display the attrs for the user to see along with a number for them
+            # to choose.
+            print()
+            for index, value in enumerate(options):
+                # any attr that contains an underscore will have it removed
+                # and the full name will be presented in title case.
+                if '_' in value:
+                    print(f'{index + 1}. {value.replace("_", " ").title()}')
+                elif value == 'prev_wknd':
+                    print(f'{index + 1}. Alternates Weekends')
+                else:
+                    print(f'{index + 1}. {value.title()}')
+            choice = input('\nPlease select the number of attribute to edit '
+                           '(press "q" to quit): ')
+            # if user wants to go back to previous menu.
+            if choice == 'q':
+                break
+            # if the user correctly enter a valid number we format the choice to
+            # present to them so that they know they are editing the chosen
+            # attribute.
+            try:
+                if int(choice) in range(len(options) + 1):
+                    # minus 1 to have the correct index with respect
+                    # to the options.
+                    choice = int(choice) - 1
+                    if choice == 0 or choice == 1 or choice == 6:
+                        result = options[choice].replace("_", " ").title()
+                    elif choice == 5:
+                        result = 'Alternates Weekends'
+                    else:
+                        result = options[choice].title()
+
+                    # the user is prompted for their desired new value.
+                    new_value = input(f'Please enter new value for '
+                                      f'"{result}" or press "q" to exit: ')
+                    if new_value == 'q':
+                        break
+                    elif choice == 3 or choice == 4:
+                        new_value = int(new_value)
+                    # the user is prompted to confirm the change.
+                    check = input('Are you happy with this value ("y/n") : ')
+                    if check == "y":
+                        # using the setattr function, the col object has the
+                        # chosen attribute changed to the new value.
+                        setattr(col, options[choice], new_value)
+                        # the current_staff file is modified to reflect the
+                        # change.
+                        with open('current_staff', 'wb') as f:
+                            pickle.dump(staff, f)
+                        # the row of the colleague is needed to update the blank
+                        # worksheet.
+                        with open('ws_rows', 'rb') as g:
+                            rows = pickle.load(g)
+                        # open the spreadsheet to allow modification.
+                        wb = openpyxl.load_workbook('blank_week.xlsx')
+                        sheet = wb.active
+                        # find the col's row from the opened row dictionary
+                        # based on the key being the col name.
+                        col_row = rows[col_name]
+                        # if the change is to the name of the col the worksheet
+                        # and the ws_rows need to be modified and saved.
+                        if options[choice] == 'first_name' or \
+                                              options[choice] == 'last_name':
+                            # Column 'A' contains the colleague names.
+                            column = 'A'
+                            # combine the column and row for the cell value and
+                            # set it to the new name value.
+                            sheet[column + str(col_row)] = col.name()
+                            wb.save('blank_week.xlsx')
+                            wb.close()
+                            # create a new key in the row dict with the modified
+                            # name, saving the previous row value.
+                            rows[col.name()] = rows.pop(col_name)
+                            with open('ws_rows', 'wb') as g:
+                                pickle.dump(rows, g)
+                        # A change to the hours value another value that
+                        # requires updating the worksheet.
+                        elif options[choice] == 'hours':
+                            # Column 'B' contains the col's hours.
+                            column = 'B'
+                            sheet[column + str(col_row)] = new_value
+                            wb.save('blank_week.xlsx')
+                            wb.close()
+                        # with a change in department, the current row of the
+                        # colleague is found, deleted and then the
+                        # col_to_excel() function will add the colleague to
+                        # their new department.
+                        elif options[choice] == 'department':
+                            # find the current row of col.
+                            row = rows[col_name]
+                            # remove from old dept.
+                            sheet.delete_rows(row)
+                            wb.save('blank_week.xlsx')
+                            # add col to new department. Function returns new
+                            # row number and also saves the worksheet.
+                            new_row = populate.shifun.ex.col_to_excel(
+                                'blank_week.xlsx',
+                                col, rows, row)
+                            # update row_dict in ws_rows.
+                            rows[col_name] = new_row
+                            for key, value in rows.items():
+                                print(f'{key} : {value}')
+                            # save to file.
+                            with open('ws_rows', 'wb') as g:
+                                pickle.dump(rows, g)
+                    return None
+            # if a non_numeric value is entered, the exception is caught.
+            except ValueError:
+                print('That is not a correct value. Please try again.')
+            # likewise, a number out of range will also be dealt with.
+            else:
+                print('That number is out of range. Please try again.')
 
     @staticmethod
     def add_menu():
@@ -212,30 +369,42 @@ class Menu:
         """
         while True:
             # departments for reference to safe guard a correct assignment.
-            depts = ['Manager', 'Shopfloor', 'Tills', 'Showroom',
-                     'Warehouse',
+            depts = ['Manager', 'Shopfloor', 'Tills', 'Showroom', 'Warehouse',
                      'Eve', 'Weekend']
+            print('Press "q" at any time to exit.')
             first = input('First name: ').title()
+            if first == 'Q':
+                break
             last = input('Last name: ').title()
-            dept = input('Department: ').title()
+            if last == 'Q':
+                break
+            dept = input(f"Department ({', '.join(depts)}): ").title()
+            if dept == 'Q':
+                break
             # prompts user until a valid dept is entered.
             while dept not in depts:
                 print('That is not a valid department. Here are your options:')
                 print(', '.join(depts))
                 dept = input('Department: ').title()
             days = input('Days per week: ')
+            if days.lower() == 'q':
+                break
             # ensures that a correct number of days is entered.
             while not days.isnumeric() or int(days) not in range(1, 6):
                 print('That is not valid. It must be between 1 and 5.')
                 days = input('Days per week: ')
             days = int(days)
             hours = input('Hours per week: ')
+            if hours.lower() == 'q':
+                break
             # ensures a valid number of hours are added.
             while not hours.isnumeric() or int(hours) not in range(4, 40):
                 print('That is not valid. It must be between 4 and 39.')
                 hours = input('Hours per week: ')
             hours = int(hours)
             wknd = input('Alternate weekends? (y/n): ')
+            if wknd.lower() == 'q':
+                break
             while wknd.lower() != 'y' and wknd.lower() != 'n':
                 print('The value must be either "y" or "n".')
                 wknd = input('Alternate weekends? (y/n): ')

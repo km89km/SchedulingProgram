@@ -1,6 +1,5 @@
 import datetime
 import random
-import sys
 
 # options for manager early/late shifts. Two lists have been opted for rather
 # than having one list and saving the chosen days in another array.
@@ -12,19 +11,37 @@ def valid_input(date_input):
     """Ensures that the correct format of date is supplied by the user;
        The correct format being yyyy-mm-dd.
     """
-    # the function will attempt to format the input to the desired format.
-    # if user enters 'q' instead of date, the program will be terminated.
-    if date_input == 'q':
-        sys.exit()
     try:
         datetime.datetime.fromisoformat(date_input)
     except ValueError:
         # if not a valid date, the user is informed and the function returns
         # False.
-        print(
-            'Incorrect date entered. Use format yyyy-mm-dd, i.e. 2022-01-01.')
+        if date_input.lower() == 'q':
+            return None
         return False
     return True
+
+def pre_populate():
+    # retrieve date for previously generated week from external file.
+    with open('previous_week.txt', 'r') as f:
+        previous_date = f.read()
+
+    # the user is prompted for the date of the week they wish to generate,
+    # with the the previously generated week supplied for reference.
+    date_input = (input(f'What week would you like to generate? '
+                        f'(The previous generated rota was {previous_date}. '
+                        f'Press "q" to return to main menu.) : '))
+
+    # the input is checked and a while loop is used to verify it.
+    while not valid_input(date_input):
+        if date_input.lower() == 'q':
+            return None
+        print(
+            'Incorrect date entered. Use format yyyy-mm-dd, i.e. 2022-01-01.')
+        date_input = (input(f'What week would you like to generate? '
+                            f'(The previous generated rota was {previous_date}. '
+                        f'Press "q" to return to main menu.) : '))
+    return date_input
 
 
 def days_calc(work_rota, staff_list, col):
@@ -180,7 +197,7 @@ def weekend_check(col):
     """Function that accepts a colleague and if they have a prev_wknd attribute,
        inverts the value and initialises a list containing the relevant weekend
        day to the returned and added to later on. Returns None if the colleague
-       does not have the attribute.
+       has an empty attribute.
     """
     if col.prev_wknd:
         # change value so that following weekend is worked.
